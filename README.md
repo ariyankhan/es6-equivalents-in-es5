@@ -530,66 +530,79 @@ ES6:
 
 ```js
 class Hello {
-  constructor(name) {
-    this.name = name;
-  }
+    constructor(name) {
+        this.name = name;
+    }
 
-  hello() {
-    return 'Hello ' + this.name + '!';
-  }
+    hello() {
+        return 'Hello ' + this.name + '!';
+    }
 
-  static sayHelloAll() {
-    return 'Hello everyone!';
-  }
+    static sayHelloAll() {
+        return 'Hello everyone!';
+    }
 }
 
 class HelloWorld extends Hello {
-  constructor() {
-    super('World');
-  }
+    constructor() {
+        super('World');
+    }
 
-  echo() {
-    alert(super.hello());
-  }
+    static sayHelloAll() {
+        console.log(super.sayHelloAll());
+    }
+
+    echo() {
+        console.log(super.hello());
+    }
 }
 
 var hw = new HelloWorld();
-hw.echo();
+hw.echo(); //Hello World!
 
-alert(Hello.sayHelloAll());
+HelloWorld.sayHelloAll(); //Hello everyone!
 ```
 
 ES5 (approximate):
 
 ```js
 function Hello(name) {
-  this.name = name;
+    this.name = name;
 }
 
-Hello.prototype.hello = function hello() {
-  return 'Hello ' + this.name + '!';
-};
-
-Hello.sayHelloAll = function () {
-  return 'Hello everyone!';
-};
+(function () {
+    Object.defineProperty(Hello, "prototype", {writable: false, enumerable: false, configurable: false});
+    Hello.prototype.hello = function () {
+        return 'Hello ' + this.name + '!';
+    };
+    Hello.sayHelloAll = function () {
+        return 'Hello everyone!';
+    };
+})();
 
 function HelloWorld() {
-  Hello.call(this, 'World');
+    Hello.call(this, 'World');
 }
 
-HelloWorld.prototype = Object.create(Hello.prototype);
-HelloWorld.prototype.constructor = HelloWorld;
-HelloWorld.sayHelloAll = Hello.sayHelloAll;
 
-HelloWorld.prototype.echo = function echo() {
-  alert(Hello.prototype.hello.call(this));
-};
+(function () {
+    HelloWorld.prototype = Object.create(Hello.prototype);
+    HelloWorld.prototype.constructor = HelloWorld;
+    HelloWorld.__proto__ = Hello;
+    Object.defineProperty(HelloWorld, "prototype", {writable: false, enumerable: false, configurable: false});
+    var _prototype_ref = HelloWorld.prototype;
+    var _constructor_ref = HelloWorld;
+    HelloWorld.prototype.echo = function () {
+        console.log(_prototype_ref.__proto__.hello.call(this));
+    };
+    HelloWorld.sayHelloAll = function () {
+        console.log(_constructor_ref.__proto__.sayHelloAll.call(this));
+    };
+})();
 
 var hw = new HelloWorld();
-hw.echo();
-
-alert(Hello.sayHelloAll());
+hw.echo(); //Hello World!
+HelloWorld.sayHelloAll(); //Hello everyone!
 ```
 
 A more faithful (albeit, slightly verbose) interpretation can be found in this [Babel](https://goo.gl/ZvEQDq) output.
